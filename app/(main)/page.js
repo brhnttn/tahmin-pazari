@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+export const dynamic = 'force-dynamic';
 
 // 1. Supabase İstemcisi Oluştur (Veri okumak için)
 const supabase = createClient(
