@@ -11,12 +11,13 @@ const supabase = createClient(
 
 export default function Navbar() {
   const router = useRouter();
-  const pathname = usePathname(); // Hangi sayfadayız?
+  const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [balance, setBalance] = useState(0);
-  const [isOpen, setIsOpen] = useState(false); // Mobil menü için
+  
+  // Mobil menü açık mı kapalı mı?
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Her sayfa değiştiğinde veya açıldığında çalışır
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -32,7 +33,10 @@ export default function Navbar() {
       }
     };
     getUser();
-  }, [pathname]); // Sayfa değiştikçe bakiyeyi güncelle
+    
+    // Sayfa değişince mobil menüyü otomatik kapat
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -44,53 +48,90 @@ export default function Navbar() {
 
   return (
     <nav className="border-b border-slate-700 bg-slate-800 sticky top-0 z-50 shadow-lg">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="max-w-6xl mx-auto px-4 py-3">
         
-        {/* LOGO */}
-        <Link href="/" className="font-bold text-xl tracking-tight text-white flex items-center gap-2">
-           🔮 Tahmin<span className="text-blue-500">Pazarı</span>
-        </Link>
+        {/* ÜST SATIR (LOGO + SAĞ TARAF) */}
+        <div className="flex justify-between items-center">
+            
+            {/* LOGO */}
+            <Link href="/" className="font-bold text-xl tracking-tight text-white flex items-center gap-2">
+            🔮 Tahmin<span className="text-blue-500">Pazarı</span>
+            </Link>
 
-        {/* MASAÜSTÜ MENÜ */}
-        <div className="flex items-center gap-6">
-          
-          {user ? (
-            // --- GİRİŞ YAPMIŞ KULLANICI ---
-            <>
-              <div className="hidden md:flex gap-4 text-sm font-semibold">
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">Piyasalar</Link>
-                <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Liderler</Link>
-                <Link href="/portfolio" className="text-gray-300 hover:text-white transition-colors">Portföyüm</Link>
-              </div>
+            {/* MASAÜSTÜ LİNKLERİ (Mobilde Gizli) */}
+            {user && (
+                <div className="hidden md:flex gap-6 text-sm font-semibold">
+                    <Link href="/" className={`hover:text-white transition-colors ${pathname === '/' ? 'text-blue-400' : 'text-gray-300'}`}>Piyasalar</Link>
+                    <Link href="/leaderboard" className={`hover:text-white transition-colors ${pathname === '/leaderboard' ? 'text-blue-400' : 'text-gray-300'}`}>Liderler</Link>
+                    <Link href="/portfolio" className={`hover:text-white transition-colors ${pathname === '/portfolio' ? 'text-blue-400' : 'text-gray-300'}`}>Portföyüm</Link>
+                </div>
+            )}
 
-              <div className="flex items-center gap-4">
-                {/* Bakiye */}
-                <div className="bg-slate-900 border border-slate-600 px-3 py-1.5 rounded-full flex items-center gap-2">
+            {/* SAĞ TARAF (Bakiye + Çıkış + Hamburger) */}
+            <div className="flex items-center gap-3">
+            
+            {user ? (
+                <>
+                {/* Bakiye (Her zaman görünür) */}
+                <div className="bg-slate-900 border border-slate-600 px-2 py-1.5 rounded-full flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                    <span className="font-mono font-bold text-yellow-400 text-sm">{balance.toLocaleString()} TP</span>
+                    <span className="font-mono font-bold text-yellow-400 text-xs md:text-sm">{balance.toLocaleString()} TP</span>
                 </div>
 
-                {/* Çıkış Yap */}
+                {/* Çıkış Yap (Sadece Masaüstünde Görünür, Mobilde Menüye Aldık) */}
                 <button 
-                  onClick={handleLogout}
-                  className="text-xs font-bold text-red-400 border border-red-900/50 bg-red-900/10 px-3 py-1.5 rounded hover:bg-red-900/30 transition-all"
+                    onClick={handleLogout}
+                    className="hidden md:block text-xs font-bold text-red-400 border border-red-900/50 bg-red-900/10 px-3 py-1.5 rounded hover:bg-red-900/30 transition-all"
                 >
-                  Çıkış
+                    Çıkış
                 </button>
-              </div>
-            </>
-          ) : (
-            // --- GİRİŞ YAPMAMIŞ KULLANICI ---
-            <div className="flex gap-3">
-              <Link href="/login" className="text-sm font-semibold text-gray-300 hover:text-white px-3 py-2">
-                Giriş Yap
-              </Link>
-              <Link href="/signup" className="text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-all shadow-lg shadow-blue-900/20">
-                Kayıt Ol
-              </Link>
+
+                {/* HAMBURGER BUTONU (Sadece Mobilde Görünür) */}
+                <button 
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="md:hidden text-gray-300 hover:text-white p-1 focus:outline-none"
+                >
+                    {isOpen ? (
+                        // X İkonu
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        // 3 Çizgi İkonu
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    )}
+                </button>
+                </>
+            ) : (
+                <div className="flex gap-2">
+                <Link href="/login" className="text-sm font-semibold text-gray-300 hover:text-white px-3 py-2">Giriş</Link>
+                <Link href="/signup" className="text-sm font-semibold bg-blue-600 text-white px-3 py-2 rounded-lg">Kayıt</Link>
+                </div>
+            )}
             </div>
-          )}
         </div>
+
+        {/* MOBİL MENÜ (Açılır Kapanır Alan) */}
+        {user && isOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-slate-700 flex flex-col gap-4 animate-in slide-in-from-top-2">
+                <Link href="/" className="block pt-4 text-gray-300 hover:text-white text-lg font-semibold px-2">
+                    🏠 Piyasalar
+                </Link>
+                <Link href="/leaderboard" className="block text-gray-300 hover:text-white text-lg font-semibold px-2">
+                    🏆 Liderler Tablosu
+                </Link>
+                <Link href="/portfolio" className="block text-gray-300 hover:text-white text-lg font-semibold px-2">
+                    💼 Portföyüm
+                </Link>
+                <div className="border-t border-slate-700 my-2"></div>
+                <button onClick={handleLogout} className="text-left text-red-400 hover:text-red-300 font-bold px-2">
+                    Çıkış Yap
+                </button>
+            </div>
+        )}
+
       </div>
     </nav>
   );
